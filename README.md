@@ -27,7 +27,7 @@ Este projeto consiste no desenvolvimento de um sistema de atendimento automatiza
 ---
 
 ## ⚙️ .ENV para rodar o projeto
-# EVO-GLOBAL-API-KEY
+```# EVO-GLOBAL-API-KEY
 AUTHENTICATION_API_KEY=
 
 # EVO-DP
@@ -68,7 +68,7 @@ HUGGINGFACE_API_KEY=''
 
 # LLAMA-V
 LLAMA_V=''
-
+```
 
 👨‍💻 Autor
 Desenvolvido por Marcos Vinícius Tenacol Coêlho 
