@@ -68,6 +68,3 @@ HUGGINGFACE_API_KEY=''
 LLAMA_V=''
 ```
 
-👨‍💻 Autor
-Desenvolvido por Marcos Vinícius Tenacol Coêlho 
-
