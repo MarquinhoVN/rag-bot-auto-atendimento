@@ -16,13 +16,12 @@ Este projeto consiste no desenvolvimento de um sistema de atendimento automatiza
 
 ## 🧠 Tecnologias Utilizadas
 
-- **Python 3.11+**
+- **Python**
 - **Transformers (Hugging Face)**
-- **LangChain / Haystack / RAG Pipeline**
-- **Telegram Bot API**
-- **FAISS / ChromaDB** (para banco vetorial)
-- **PyMuPDF / pdfminer** (leitura de PDFs)
-- **Flask / FastAPI** (para serviços locais, se necessário)
+- **LangChain / Groq / RAG Pipeline**
+- **Evolution API** (API para whatsapp)
+- **ChromaDB** (para banco vetorial)
+- **Flask** (para serviços locais, se necessário)
 
 ---
 
