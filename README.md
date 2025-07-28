@@ -10,7 +10,6 @@ Este projeto consiste no desenvolvimento de um sistema de atendimento automatiza
 - Geração de respostas com base em arquivos institucionais usando RAG.
 - Interface com usuários por meio do Telegram Bot API.
 - Armazenamento e consulta de logs de interação.
-- Suporte a múltiplos formatos de entrada (PDF, TXT, DOCX).
 
 ---
 
@@ -18,7 +17,7 @@ Este projeto consiste no desenvolvimento de um sistema de atendimento automatiza
 
 - **Python**
 - **Transformers (Hugging Face)**
-- **LangChain / Groq / RAG Pipeline**
+- **LangChain / Groq (LLAMA) / RAG**
 - **Evolution API** (API para whatsapp)
 - **ChromaDB** (para banco vetorial)
 - **Flask** (para serviços locais, se necessário)
