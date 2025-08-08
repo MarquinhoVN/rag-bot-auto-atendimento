@@ -1,10 +1,10 @@
-# 🤖 Sistema de Atendimento Automatizado via Telegram
+# Sistema de Atendimento Automatizado via Telegram
 
 Este projeto consiste no desenvolvimento de um sistema de atendimento automatizado utilizando **Processamento de Linguagem Natural (PLN)** e técnicas de **Geração Aumentada por Recuperação (RAG)**, implementado por meio de um bot no **Whatsapp**. O objetivo é oferecer respostas contextualizadas a partir da identificação de intenções e da extração de informações de **documentos institucionais**, como PDFs, manuais e bases internas.
 
 ---
 
-## 📌 Funcionalidades
+## Funcionalidades
 
 - Identificação da intenção do usuário via PLN (ex: solicitação de reserva).
 - Geração de respostas com base em arquivos institucionais usando RAG.
@@ -13,7 +13,7 @@ Este projeto consiste no desenvolvimento de um sistema de atendimento automatiza
 
 ---
 
-## 🧠 Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 - **Python**
 - **Transformers (Hugging Face)**
