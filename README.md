@@ -1,4 +1,4 @@
-# Sistema de Atendimento Automatizado via Telegram
+# Sistema de Atendimento Automatizado via Whatsapp
 
 Este projeto consiste no desenvolvimento de um sistema de atendimento automatizado utilizando **Processamento de Linguagem Natural (PLN)** e técnicas de **Geração Aumentada por Recuperação (RAG)**, implementado por meio de um bot no **Whatsapp**. O objetivo é oferecer respostas contextualizadas a partir da identificação de intenções e da extração de informações de **documentos institucionais**, como PDFs, manuais e bases internas.
 
