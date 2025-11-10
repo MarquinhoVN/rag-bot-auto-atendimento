@@ -21,7 +21,7 @@ services:
     ports:
       - '5000:5000'
     volumes:
-      - .:/app
+      - .:/api
       - ./chroma_data:/app/chroma_data
     networks:
       - evolution-networks
