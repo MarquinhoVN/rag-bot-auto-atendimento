@@ -1,0 +1,202 @@
+from datetime import datetime, date
+from app.services.preReservationStepService import (
+    get_active_pre_reservation_step,
+    create_pre_reservation_step,
+    update_pre_reservation_step,
+    cancel_pre_reservation_step
+)
+from app.services.reservationService import save_reservation
+from bot.reservation.llm import structured_llm
+from dateutil.parser import parse as date_parse
+import json
+import re
+
+
+def generate_dynamic_question(field, context):
+    field_descriptions = {
+        "name": "nome do hóspede",
+        "contact": "telefone ou WhatsApp para contato",
+        "check_in_date": "data de entrada",
+        "check_out_date": "data de saída",
+        "room_type": "tipo de quarto desejado (ex: simples, casal, suíte, luxo, etc.)",
+        "quantity": "quantidade de pessoas que vão se hospedar",
+        "description": "alguma observação opcional que deseja adicionar"
+    }
+
+    prompt = f"""
+    Você é um assistente educado, natural e especializado em reservas de hotel.
+
+    Ao gerar a pergunta, **nunca inicie com saudações** como "olá", "oi", "tudo bem".
+    Gere APENAS a pergunta direta.
+
+    Campo atual: {field}
+    Significado do campo: {field_descriptions.get(field, field)}
+    Contexto da conversa: {context}
+
+    Gere uma pergunta curta, direta e amigável.
+    """
+
+    return structured_llm.ask(prompt)
+
+def extract_fields_with_llm(message, current_data, current_step):
+
+    cleaned = message.strip().lower()
+
+    if cleaned.isdigit():
+        number = int(cleaned)
+
+        if len(cleaned) >= 10:
+            return {"contact": cleaned}
+
+        if 1 <= number <= 10:
+            return {"quantity": number}
+
+    prompt = f"""
+    Extraia somente os campos abaixo da mensagem do usuário.
+    Retorne SOMENTE um JSON válido.
+
+    Campos possíveis:
+    - name
+    - contact
+    - check_in_date
+    - check_out_date
+    - quantity
+
+    Regras:
+    - Caso o passo seja {current_step} seja QUANTITY e tenha um texto e um número, considere apenas o número e retorne ele junto a quantity.
+    - Quantity deve ser um número pequeno, não passará de 10.
+    - Não transforme letras em número para o quantity.
+    - Se estiver pedindo check_in_date, NÃO retorne check_out_date.
+    - Se estiver pedindo check_out_date, NÃO retorne check_in_date.
+    - A data de saída deve ser posterior à data de entrada: {current_data.get("check_in_date")}.
+    - Lembre-se que pode estar no fim do ano, se tiver perto o suficiente, aceite datas menores, porque pode indicar que é para o próximo ano.
+    - Quantity deve ser sempre um número inteiro.
+    - Se não houver campo identificável, retorne {{}}.
+
+    Mensagem: "{message}"
+    Dados atuais: {current_data}
+    """
+
+    response = structured_llm.ask(prompt)
+
+    try:
+        data = json.loads(response)
+    except:
+        match = re.search(r"\{.*\}", response, flags=re.DOTALL)
+        if not match:
+            return {}
+        try:    
+            data = json.loads(match.group(0))
+        except:
+            return {}
+
+    if "check_out_date" in data and current_data.get("check_in_date"):
+        try:
+            from datetime import datetime
+
+            check_in = current_data["check_in_date"]
+            if isinstance(check_in, str):
+                check_in = datetime.fromisoformat(check_in).date()
+
+            check_out = data["check_out_date"]
+            if isinstance(check_out, str):
+                check_out = datetime.fromisoformat(check_out).date()
+
+            if check_out <= check_in:
+                return {
+                    "__error__": "A data de saída deve ser posterior à data de entrada."
+                }
+        except:
+            return {}
+
+    return data
+
+
+
+def parse_date_or_none(x):
+    try:
+        return date_parse(x, dayfirst=True).date()
+    except:
+        return None
+
+
+
+def handle_reservation_flow(user, message):
+    cleaned = message.strip().lower()
+
+    if cleaned in ["cancelar", "cancelar reserva", "cancelar pré-reserva"]:
+        cancel_pre_reservation_step(user.id)
+        return "Reserva cancelada! Se quiser começar de novo, é só dizer 😊"
+
+    step = get_active_pre_reservation_step(user.id)
+    if not step:
+        step = create_pre_reservation_step(user.id)
+        return generate_dynamic_question("name", "Início da reserva")
+    data = {
+        "name": step.name,
+        "contact": step.contact,
+        "check_in_date": str(step.check_in_date) if step.check_in_date else None,
+        "check_out_date": str(step.check_out_date) if step.check_out_date else None,
+        "room_type": step.room_type,
+        "quantity": step.quantity,
+        "description": step.description
+    }
+
+    extracted = extract_fields_with_llm(message, data, step.step)
+
+    for key, val in extracted.items():
+        if key in data and not data[key]:
+            if "date" in key:
+                val = parse_date_or_none(val)
+            if key == step.step:
+                setattr(step, key, val)
+
+    needed_fields = [
+        "name",
+        "contact",
+        "check_in_date",
+        "check_out_date",
+        "quantity",
+        "room_type",
+        "description"
+    ]
+
+    for field in needed_fields:
+        if field in ["room_type", "description"]:
+            if getattr(step, field) in [None, ""]:
+                if field == "room_type" and step.check_in_date and step.check_out_date and step.quantity and step.step == 'room_type':
+
+                    best = find_best_room(
+                        step.check_in_date,
+                        step.check_out_date,
+                        step.quantity,
+                        message
+                    )
+
+                    if not best:
+                        return (
+                            "Infelizmente não encontrei nenhum quarto compatível com essa preferência. "
+                            "Você pode descrever outro tipo de quarto que gostaria?"
+                        )
+                if field == step.step:
+                    setattr(step, field, message)
+
+        if getattr(step, field) in [None, ""]:
+            update_pre_reservation_step(user.id, field, step)
+            return generate_dynamic_question(field, data)
+
+    save_reservation(
+        user_id=user.id,
+        name=step.name,
+        contact=step.contact,
+        check_in_date=step.check_in_date,
+        check_out_date=step.check_out_date,
+        room_type=step.room_type,     
+        quantity=step.quantity,
+        description=step.description,   
+    )
+
+    step.step = "finalizado"
+    update_pre_reservation_step(user.id, "finalizado", step)
+
+    return "Prontinho! Sua pré-reserva foi registrada com sucesso. Entraremos em contato em breve 😊"

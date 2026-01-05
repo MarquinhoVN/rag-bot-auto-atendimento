@@ -15,4 +15,4 @@ up-api:
 	docker compose up
 
 build-api:
-	docker compose build --no-cache api
+	docker compose build --no-cache api -d

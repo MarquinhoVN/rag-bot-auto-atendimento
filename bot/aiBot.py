@@ -8,7 +8,6 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
-from langdetect import detect
 
 
 os.environ['GROQ_API_KEY'] = config('GROQ_API_KEY')
@@ -21,8 +20,10 @@ class AIBot:
         self.__retriever = self.__build_retriever()
 
     def __build_retriever(self):
-        persist_directory = '/app/chroma_data'
-        embedding = HuggingFaceEmbeddings()
+        persist_directory = '/api/chroma_data'
+        embedding = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        )
 
         vector_store = Chroma(
             persist_directory=persist_directory,
@@ -51,13 +52,12 @@ class AIBot:
         Você é um atendente virtual de um hotel, responsável por tirar dúvidas de possíveis hóspedes.  
         Responda sempre com simpatia, respeito e clareza, de forma natural e objetiva — como em um diálogo entre duas pessoas.
 
-        IMPORTANTE:  
-        - Detecte a linguagem da **última mensagem do usuário** e responda **exatamente nessa mesma linguagem** (português, inglês, etc).  
+        IMPORTANTE: 
         - NÃO traduza conteúdos automaticamente.  
         - Responda **apenas com base no contexto fornecido** abaixo, sem inventar informações externas.  
         - Use frases curtas, diretas, e fáceis de entender.  
         - Se necessário, inicie um novo tópico com naturalidade.
-        - A linguagem da conversa é: {lang}. Responda apenas nesta linguagem.
+        - A linguagem da conversa é: Português BR. Responda apenas nesta linguagem.
         - Dê respostas curtas        
 
         <context>
@@ -76,8 +76,7 @@ class AIBot:
         document_chain = create_stuff_documents_chain(self.__chat, question_answering_prompt)
         response = document_chain.invoke({
             'context': docs,
-            'messages': self.__build_messages(history_messages, question),
-            'lang': detect(question),
+            'messages': self.__build_messages(history_messages, question)
         })
         
-        return response, detect(question)
+        return response

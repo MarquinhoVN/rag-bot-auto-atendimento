@@ -10,7 +10,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 os.environ['HUGGINGFACE_API_KEY'] = config('HUGGINGFACE_API_KEY')
 
-persist_directory = '/app/chroma_data'
+persist_directory = '/api/chroma_data'
 
 if __name__ == '__main__':
 
@@ -19,7 +19,7 @@ if __name__ == '__main__':
             shutil.rmtree(persist_directory)
             print("Banco vetorial limpo.")
 
-    folder_path = '/app/rag/documents'
+    folder_path = '/api/rag/documents'
     all_docs = []
 
     for filename in os.listdir(folder_path):
@@ -35,7 +35,9 @@ if __name__ == '__main__':
     )
     chunks = text_splitter.split_documents(documents=all_docs)
 
-    embedding = HuggingFaceEmbeddings()
+    embedding = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        )
     vector_store = Chroma(
         embedding_function=embedding,
         persist_directory=persist_directory,

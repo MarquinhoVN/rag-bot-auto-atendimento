@@ -1,10 +1,12 @@
 import os
 from flask import Flask
 from sqlalchemy import text
-from models.database import db
+from app.models.database import db
 from routes.webhook import webhook_bp
 
-from models import messageHistory, preReservation, user, preReservationStep
+from app.models import messageHistory, reservation, user, preReservationStep
+from app.mock.model_mock import RoomType, RoomOccupancy, Room ##PARA MOCK
+from app.mock.data_mock import load_mock_data
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_CONNECTION_URI']
@@ -18,6 +20,7 @@ with app.app_context():
         conn.commit()
 
     db.create_all()
+    load_mock_data() ## Mock dos Dados
 
 app.register_blueprint(webhook_bp)
 

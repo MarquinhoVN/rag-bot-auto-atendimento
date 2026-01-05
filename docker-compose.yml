@@ -22,7 +22,7 @@ services:
       - '5000:5000'
     volumes:
       - .:/api
-      - ./chroma_data:/app/chroma_data
+      - ./chroma_data:/api/chroma_data
     networks:
       - evolution-networks
   postgres: 
