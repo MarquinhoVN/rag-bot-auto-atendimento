@@ -8,7 +8,7 @@ down:
 	docker compose down
 
 rebuild:
-	docker compose build --no-cache api
+	docker compose build --no-cache 
 
 up-api:
 	docker compose build --no-cache api

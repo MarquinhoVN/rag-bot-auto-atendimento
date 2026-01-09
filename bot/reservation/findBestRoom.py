@@ -3,8 +3,10 @@ from app.models.database import db
 
 from llama_index.core import VectorStoreIndex, Document
 from llama_index.core.settings import Settings
+from llama_index.llms.groq import Groq
 
-from bot.reservation.llm import structured_llm
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+import os
 
 def find_best_room(
     check_in,
@@ -53,14 +55,24 @@ def find_best_room(
         return False
 
     documents = []
-    for room in rooms:
+    for room in result:
         text_content = f"""
         Tipo do quarto: {room.room_type}
         Descrição: {room.room_description}
         """
         documents.append(Document(text=text_content))
 
-    Settings.llm = structured_llm 
+    llamaindex_llm = Groq(
+        model=os.environ["LLAMA_V"],
+        api_key=os.environ["GROQ_API_KEY"]
+    )
+
+    Settings.llm = llamaindex_llm
+
+    Settings.embed_model = HuggingFaceEmbedding(
+        model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    )
+
     index = VectorStoreIndex.from_documents(documents)
 
     query_engine = index.as_query_engine(similarity_top_k=1)
